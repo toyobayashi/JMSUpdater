@@ -1,0 +1,8 @@
+.vs
+*.vcxproj.user
+/Debug/*
+!/Debug/xldl.dll
+!/Debug/download
+!/Debug/NXPatcherLite.exe
+/Release
+/dist
