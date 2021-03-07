@@ -6,3 +6,6 @@
 !/Debug/NXPatcherLite.exe
 /Release
 /dist
+
+/NXPatcherLite++/Release
+/NXPatcherLite++/Debug

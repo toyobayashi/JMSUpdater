@@ -49,6 +49,8 @@ static CString GetStatusString(DOWN_TASK_STATUS status) {
   }
 }
 
+int PreArgHandler(char* fileName);
+
 static void MakePatch(CPatchDownloadDlg* self, const CString& name) {
   WCHAR szModulePath[MAX_PATH] = { 0 };
   GetModuleFileNameW(NULL, szModulePath, MAX_PATH);
@@ -58,10 +60,14 @@ static void MakePatch(CPatchDownloadDlg* self, const CString& name) {
   WCHAR targetdir[MAX_PATH] = { 0 };
   PathCombineW(targetdir, szModulePath, L"data");
   CString exe = wexe;
-  CString cmdl = exe + _T(" ") + targetdir + _T("\\") + name;
+  CString path = CString(targetdir) + _T("\\") + name;
+  CString cmdl = exe + _T(" ") + path;
   CString* make = new CString(_T("正在制作补丁程序..."));
   ::PostMessageW(self->m_hWnd, WM_PATCH_LOG, 0, (LPARAM)make);
-  if (Execute(wexe, cmdl.GetString()) == 0) {
+  char pathA[MAX_PATH];
+  WideCharToMultiByte(CP_ACP, 0, path.GetString(), -1, pathA, MAX_PATH, NULL, NULL);
+  // if (Execute(wexe, cmdl.GetString()) == 0) {
+  if (PreArgHandler(pathA)) {
     CString * compl = new CString(_T("已完成"));
     ::PostMessageW(self->m_hWnd, WM_PATCH_LOG, 0, (LPARAM)compl);
   } else {
@@ -88,8 +94,8 @@ CPatchDownloadDlg::~CPatchDownloadDlg()
 BOOL CPatchDownloadDlg::OnInitDialog() {
   CDialogEx::OnInitDialog();
   progress.SetRange(0, 10000);
-  input_from_value = L"384";
-  input_to_value = L"385";
+  input_from_value = L"392";
+  input_to_value = L"394";
   UpdateData(0);
 
   dl.InitEngine();
