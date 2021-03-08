@@ -1,13 +1,15 @@
 const fs = require('fs')
+const path = require('path')
 
 function append (p) {
-  const base = fs.readFileSync('base')
+  const basePath = path.join(__dirname, 'patchers/PatcherOriginal.exe')
+  console.log(`Append ${basePath}`)
+  const base = fs.readFileSync(basePath)
   const buf = Buffer.alloc(4)
   buf.writeUInt32LE(base.length)
-  fs.appendFileSync(p, Buffer.concat([fs.readFileSync('base'), buf]))
+  fs.appendFileSync(p, Buffer.concat([base, buf]))
 }
 
 setTimeout(() => {
-  console.log('Append base')
   append(process.argv[2])
 }, 200)
