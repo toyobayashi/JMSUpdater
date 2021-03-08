@@ -1,3 +1,4 @@
+#include <Windows.h>
 #include <shlwapi.h>
 #include "DownWrapper.h"
 
@@ -14,7 +15,9 @@ namespace DownEngine
         PathCombineW(szDllpath, szModulePath, L"xldl.dll");  // 连接路径, 新版建议使用 PathCchCombine
         m_hModule = LoadLibraryW(szDllpath);
         if (m_hModule == NULL) {
-          throw L"can not load xldl.dll";
+          MessageBoxA(NULL, "Can not load xldl.dll", "Error", MB_ICONERROR | MB_OK);
+          ExitProcess(EXIT_FAILURE);
+          return;
         }
         m_Init                      = (fn_Init)                         GetProcAddress(m_hModule, "XL_Init");
         m_UnInit                    = (fn_UnInit)                       GetProcAddress(m_hModule, "XL_UnInit");

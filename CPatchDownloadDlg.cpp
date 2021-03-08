@@ -11,7 +11,7 @@
 // CPatchDownloadDlg 对话框
 
 //参数 文件绝对路径 和 命令行
-static DWORD Execute(LPCTSTR pszExeFile, LPCTSTR pszCmdLine) {
+/* static DWORD Execute(LPCTSTR pszExeFile, LPCTSTR pszCmdLine) {
   // 启动子进程
   PROCESS_INFORMATION pi;
   STARTUPINFO si = { sizeof(si) };
@@ -34,7 +34,7 @@ static DWORD Execute(LPCTSTR pszExeFile, LPCTSTR pszCmdLine) {
   CloseHandle(pi.hProcess);
 
   return dwExitCode;
-}
+} */
 
 static CString GetStatusString(DOWN_TASK_STATUS status) {
   switch (status) {
@@ -49,7 +49,7 @@ static CString GetStatusString(DOWN_TASK_STATUS status) {
   }
 }
 
-int PreArgHandler(char* fileName);
+int PreArgHandler(char* fileName, char* outMessage, int outMessageLength);
 
 static void MakePatch(CPatchDownloadDlg* self, const CString& name) {
   WCHAR szModulePath[MAX_PATH] = { 0 };
@@ -67,11 +67,15 @@ static void MakePatch(CPatchDownloadDlg* self, const CString& name) {
   char pathA[MAX_PATH];
   WideCharToMultiByte(CP_ACP, 0, path.GetString(), -1, pathA, MAX_PATH, NULL, NULL);
   // if (Execute(wexe, cmdl.GetString()) == 0) {
-  if (PreArgHandler(pathA)) {
+  char msg[512] = { 0 };
+  wchar_t msgW[512] = { 0 };
+  if (PreArgHandler(pathA, msg, sizeof(msg))) {
     CString * compl = new CString(_T("已完成"));
     ::PostMessageW(self->m_hWnd, WM_PATCH_LOG, 0, (LPARAM)compl);
   } else {
-    CString * compl = new CString(_T("制作失败"));
+    CString * compl = new CString(_T("制作失败："));
+    MultiByteToWideChar(CP_ACP, 0, msg, -1, msgW, 512);
+    compl->Append(CString(msgW));
     ::PostMessageW(self->m_hWnd, WM_PATCH_LOG, 0, (LPARAM)compl);
   }
   return;
@@ -235,6 +239,7 @@ LRESULT CPatchDownloadDlg::OnProgress(WPARAM wParam, LPARAM lParam) {
     input_to.EnableWindow(1);
     button.SetWindowTextW(L"开始");
     is_downloading = false;
+    progress.SetPos(0);
     return 0;
   }
   DownTaskInfo* info = (DownTaskInfo*)lParam;

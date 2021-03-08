@@ -5,4 +5,4 @@ enum NXError {
 	BAD_HEADER,
 };
 
-int ErrorHandler(int errorNumber, int MessageBoxOptions, int exitIfReturn = IDCANCEL);
+std::string ErrorHandler(int errorNumber);

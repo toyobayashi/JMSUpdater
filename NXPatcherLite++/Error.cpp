@@ -4,11 +4,11 @@
 
 #include "Error.h"
 
-int ErrorHandler(int errorNumber, int MessageBoxOptions, int exitIfReturn)
+std::string ErrorHandler(int errorNumber)
 {
 	std::string sError;
 	std::ostringstream sStream;
-	int result;
+	// int result;
 
 	sStream << "ERROR ";
 	sStream << errorNumber;
@@ -34,14 +34,5 @@ int ErrorHandler(int errorNumber, int MessageBoxOptions, int exitIfReturn)
 
 	}
 
-	sError = sStream.str();
-
-	result = MessageBox(NULL, sError.c_str(), "NXPatcher Lite", MessageBoxOptions);
-
-	if(result == exitIfReturn || result == 0)
-	{
-		ExitProcess(EXIT_FAILURE);
-	}
-
-	return result;
+	return sStream.str();
 }

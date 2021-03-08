@@ -1,14 +1,16 @@
-#include <iostream>
 #include <Windows.h>
+#include <iostream>
 #include <fstream>
 #include <vector>
 #include <sstream>
+#include <cstddef>
+#include <cstring>
 
 #include "Error.h"
 #include "Checksum.h"
 #include "PatchFile.h"
 
-int WritePatch(char* patchFile)
+int WritePatch(char* patchFile, char* outMessage, int outMessageLength)
 {
 	std::string notice("NXPatcher Lite v2.0 - Written by Fiel (toyobayashi Fork) - http://www.southperry.net/");
 	std::string outputFile;
@@ -17,7 +19,7 @@ int WritePatch(char* patchFile)
 	std::vector<unsigned char> v;
 	std::ifstream currentEXE;
 	std::ifstream fPatch;
-	int lengthBase = 0;
+	size_t lengthBase = 0;
 	std::vector<unsigned char> base;
 	unsigned int zlibCRC;
 	Checksum crc;
@@ -25,19 +27,21 @@ int WritePatch(char* patchFile)
 	int lengthPatch;
 	int blockSize = 5000000;
 	std::ostringstream cmdline;
-	int lengthCurrentEXE;
+	size_t lengthCurrentEXE;
 	char fileName[MAX_PATH] = {0};
 	int lengthZlibBlock;
+	
+	size_t lengthSize = 4;
 
 	//Read in the base file stored in the current executable file
 	GetModuleFileNameA(NULL, fileName, MAX_PATH);
 	currentEXE.open(fileName, std::ios::binary | std::ios::in);
 	currentEXE.seekg(0, currentEXE.end);
 	lengthCurrentEXE = (int) currentEXE.tellg();
-	currentEXE.seekg(lengthCurrentEXE - sizeof(lengthBase), currentEXE.beg);
-	currentEXE.read(reinterpret_cast<char*>(&lengthBase), sizeof(lengthBase));
+	currentEXE.seekg(lengthCurrentEXE - lengthSize, currentEXE.beg);
+	currentEXE.read(reinterpret_cast<char*>(&lengthBase), lengthSize);
 	base.resize(lengthBase);
-	currentEXE.seekg(lengthCurrentEXE - sizeof(lengthBase) - lengthBase, currentEXE.beg);
+	currentEXE.seekg(lengthCurrentEXE - lengthSize - lengthBase, currentEXE.beg);
 	currentEXE.read(reinterpret_cast<char*>(&base[0]), lengthBase);
 	currentEXE.close();
 
@@ -83,9 +87,12 @@ int WritePatch(char* patchFile)
 
 	if(zlibCRC != crc.GetResult())
 	{
-		ErrorHandler(NXError::BAD_CRC, MB_OK | MB_ICONEXCLAMATION, IDOK);
-		DeleteFile(outputFile.c_str());
-		// ExitProcess(EXIT_FAILURE);
+		std::string msg = ErrorHandler(NXError::BAD_CRC);
+		DeleteFileA(outputFile.c_str());
+		if (outMessage != NULL) {
+			strncpy(outMessage, msg.c_str(), outMessageLength - 1);
+			*(outMessage + outMessageLength - 1) = '\0';
+		}
 		return 0;
 	}
 
@@ -94,12 +101,16 @@ int WritePatch(char* patchFile)
 	{
 		ShellExecute(NULL, "open", outputFile.c_str(), NULL, NULL, SW_SHOW);
 	} */
+
+	if (outMessage != NULL) {
+		memset(outMessage, 0, outMessageLength);
+	}
 	return 1;
 }
 
 
 
-void NoArgHandler(void)
+/* void NoArgHandler(void)
 {
 	OPENFILENAME ofn;
 	std::string szFile;
@@ -141,16 +152,19 @@ void NoArgHandler(void)
 			ExitProcess(EXIT_SUCCESS);
 		}
 	}while(result);
-}
+} */
 
-int PreArgHandler(char* fileName)
+int PreArgHandler(char* fileName, char* outMessage, int outMessageLength)
 {
 	if(CheckHeader(fileName) == 0) {
-		ErrorHandler(NXError::BAD_HEADER, MB_OKCANCEL | MB_ICONEXCLAMATION);
-		// NoArgHandler();
+		std::string msg = ErrorHandler(NXError::BAD_HEADER);
+		if (outMessage != NULL) {
+			strncpy(outMessage, msg.c_str(), outMessageLength - 1);
+			*(outMessage + outMessageLength - 1) = '\0';
+		}
 		return 0;
 	} else {
-		return WritePatch(fileName);
+		return WritePatch(fileName, outMessage, outMessageLength);
 	}
 }
 

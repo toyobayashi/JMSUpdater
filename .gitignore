@@ -1,5 +1,7 @@
 .vs
 *.vcxproj.user
+*.aps
+
 /Debug/*
 !/Debug/xldl.dll
 !/Debug/download
