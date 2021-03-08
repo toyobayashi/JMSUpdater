@@ -31,7 +31,7 @@ https://webdown2.nexon.co.jp/maple/patch/patchdir/00394/00393to00394.patch
 更新程序格式：
 
 ```cpp
-struct pre_patcher {
+struct pre_patcher_old {
   // [Binary] Patcher.exe 可执行文件
   uint8_t*   base_patcher_exe;
   // [Binary] 自己手动下载好的 Patch 文件
@@ -43,6 +43,27 @@ struct pre_patcher {
   // [UINT32] 通知字符串长度
   uint32_t   notice_length;
   // [固定 4 个字节 F3 FB F7 F2]
+  // uint32_t 4076338163
   uint8_t    magic[4];
+};
+
+// 新版的手动更新程序只有在电脑上
+// 已安装 MapleStory 的情况下
+// （控制面板里能看到有）才能打开
+struct pre_patcher_new {
+  // [Binary] Patcher.exe 可执行文件
+  uint8_t*   base_patcher_exe;
+  // [Binary] 自己手动下载好的 Patch 文件
+  uint8_t*   patch_file;
+  // [String] 通知字符串，不以 \0 结束，
+  // 国服以 GBK 编码，当更新页面访问失败时显示
+  char*      notice;
+  // [UINT64] Patch 文件大小
+  uint64_t   patch_file_size;
+  // [UINT64] 通知字符串长度
+  uint64_t   notice_length;
+  // [固定 8 个字节 F3 FB F7 F2 00 00 00 00]
+  // uint64_t 4076338163
+  uint8_t    magic[8];
 };
 ```
