@@ -53,7 +53,7 @@ BEGIN
     "\r\n"
     "#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_CHS)\r\n"
     "LANGUAGE 4, 2\r\n"
-    "#include ""res\\JMSDownloader.rc2""  // 非 Microsoft Visual C++ 编辑的资源\r\n"
+    "#include ""res\\JMSUpdater.rc2""  // 非 Microsoft Visual C++ 编辑的资源\r\n"
     "#include ""l.CHS\\afxres.rc""      // 标准组件\r\n"
     "#if !defined(_AFXDLL)\r\n"
     "#include ""l.CHS\\afxribbon.rc""   // MFC 功能区和控制条资源\r\n"
@@ -122,8 +122,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 1,0,0,1
- PRODUCTVERSION 1,0,0,1
+ FILEVERSION 1,1,0,0
+ PRODUCTVERSION 1,1,0,0
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -140,11 +140,11 @@ BEGIN
         BEGIN
             VALUE "CompanyName", "Toyobayashi"
             VALUE "FileDescription", "日服冒险岛更新工具"
-            VALUE "FileVersion", "1.0.0.1"
+            VALUE "FileVersion", "1.1.0.0"
             VALUE "InternalName", "JMSUpdater.exe"
             VALUE "OriginalFilename", "JMSUpdater.exe"
             VALUE "ProductName", "JMSUpdater"
-            VALUE "ProductVersion", "1.0.0.1"
+            VALUE "ProductVersion", "1.1.0.0"
         END
     END
     BLOCK "VarFileInfo"
