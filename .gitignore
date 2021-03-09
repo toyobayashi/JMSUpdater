@@ -5,6 +5,7 @@
 /Debug/*
 !/Debug/xldl.dll
 !/Debug/download
+!/Debug/patchers
 !/Debug/NXPatcherLite.exe
 /Release
 /dist

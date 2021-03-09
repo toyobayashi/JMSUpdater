@@ -49,7 +49,7 @@ static CString GetStatusString(DOWN_TASK_STATUS status) {
   }
 }
 
-int PreArgHandler(char* fileName, char* outMessage, int outMessageLength);
+int PreArgHandler(char* fileName, char* baseFullPath, int type, char* outMessage, int outMessageLength);
 
 static void MakePatch(CPatchDownloadDlg* self, const CString& name) {
   WCHAR szModulePath[MAX_PATH] = { 0 };
@@ -67,9 +67,17 @@ static void MakePatch(CPatchDownloadDlg* self, const CString& name) {
   char pathA[MAX_PATH];
   WideCharToMultiByte(CP_ACP, 0, path.GetString(), -1, pathA, MAX_PATH, NULL, NULL);
   // if (Execute(wexe, cmdl.GetString()) == 0) {
+  int index = self->type_select.GetCurSel();
+  const version_option* option = (version_option*) self->type_select.GetItemData(index);
+  char baseFullPath[MAX_PATH] = { 0 };
+  WCHAR baseFullPathW[MAX_PATH] = { 0 };
+  if (option->relative_path != _T("")) {
+    PathCombineW(baseFullPathW, szModulePath, option->relative_path.GetString());
+    WideCharToMultiByte(CP_ACP, 0, baseFullPathW, -1, baseFullPath, MAX_PATH, NULL, NULL);
+  }
   char msg[512] = { 0 };
   wchar_t msgW[512] = { 0 };
-  if (PreArgHandler(pathA, msg, sizeof(msg))) {
+  if (PreArgHandler(pathA, baseFullPath, option->type, msg, sizeof(msg))) {
     CString * compl = new CString(_T("已完成"));
     ::PostMessageW(self->m_hWnd, WM_PATCH_LOG, 0, (LPARAM)compl);
   } else {
@@ -85,9 +93,13 @@ IMPLEMENT_DYNAMIC(CPatchDownloadDlg, CDialogEx)
 
 CPatchDownloadDlg::CPatchDownloadDlg(CWnd* pParent /*=nullptr*/)
   : CDialogEx(IDD_PATCHDOWNLOAD, pParent), log_value(_T(""))
-  , input_from_value(_T("")), input_to_value(_T("")), dl(), taskHandle(NULL), static_progress(_T("")), static_speed(_T(""))
+  , input_from_value(_T("")), input_to_value(_T("")), dl(), version_options_list(), taskHandle(NULL), static_progress(_T("")), static_speed(_T(""))
   , downloadThread(NULL), status_value(_T("")) {
 
+  version_options_list.push_back({ 1, _T("默认"), _T("") });
+  version_options_list.push_back({ 1, _T("旧国际服"), _T("patchers\\PatcherGMSOld.exe") });
+  version_options_list.push_back({ 2, _T("国服"), _T("patchers\\PatcherCMS.exe") });
+  version_options_list.push_back({ 2, _T("东南亚服"), _T("patchers\\PatcherSEA.exe") });
 }
 
 CPatchDownloadDlg::~CPatchDownloadDlg()
@@ -98,8 +110,29 @@ CPatchDownloadDlg::~CPatchDownloadDlg()
 BOOL CPatchDownloadDlg::OnInitDialog() {
   CDialogEx::OnInitDialog();
   progress.SetRange(0, 10000);
-  input_from_value = L"392";
+  input_from_value = L"393";
   input_to_value = L"394";
+
+  WCHAR szModulePath[MAX_PATH] = { 0 };
+  GetModuleFileNameW(NULL, szModulePath, MAX_PATH);
+  PathRemoveFileSpecW(szModulePath);
+
+  for (const auto& o : version_options_list) {
+    if (o.label == _T("默认")) {
+      int index = type_select.InsertString(-1, o.label);
+      type_select.SelectString(-1, o.label);
+      type_select.SetItemData(index, (DWORD_PTR)&o);
+      continue;
+    }
+
+    WCHAR path[MAX_PATH] = { 0 };
+    PathCombineW(path, szModulePath, o.relative_path.GetString());
+    if (PathFileExistsW(path)) {
+      int index = type_select.InsertString(-1, o.label);
+      type_select.SetItemData(index, (DWORD_PTR)&o);
+    }
+  }
+
   UpdateData(0);
 
   dl.InitEngine();
@@ -111,6 +144,7 @@ void CPatchDownloadDlg::DoDataExchange(CDataExchange* pDX)
   CDialogEx::DoDataExchange(pDX);
   DDX_Control(pDX, IDC_FROM_EDIT, input_from);
   DDX_Control(pDX, IDC_TO_EDIT, input_to);
+  DDX_Control(pDX, IDC_TYPE_SELECT, type_select);
   DDX_Control(pDX, IDC_START_BUTTON, button);
   DDX_Control(pDX, IDC_PROGRESS1, progress);
   DDX_Control(pDX, IDC_LOG_EDIT, log);

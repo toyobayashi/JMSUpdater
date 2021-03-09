@@ -1,10 +1,18 @@
 #pragma once
 
+#include <list>
+
 #include "xl/DownWrapper.h"
 // CPatchDownloadDlg 对话框
 
 #define WM_UPDATE_PROGRESS (WM_USER + 100)
 #define WM_PATCH_LOG (WM_USER + 101)
+
+typedef struct version_option {
+	int type;
+	CString label;
+	CString relative_path;
+} version_option;
 
 class CPatchDownloadDlg : public CDialogEx
 {
@@ -27,6 +35,7 @@ protected:
 public:
   CEdit input_from;
   CEdit input_to;
+	CComboBox type_select;
   CButton button;
   CProgressCtrl progress;
   CEdit log;
@@ -36,6 +45,8 @@ public:
 	afx_msg LRESULT OnLog(WPARAM wParam, LPARAM lParam);
 	CString input_from_value;
 	CString input_to_value;
+
+	std::list<version_option> version_options_list;
 
 	BOOL is_downloading = false;
 

@@ -5,51 +5,63 @@
 #include <sstream>
 #include <cstddef>
 #include <cstring>
+#include <cstdint>
 
 #include "Error.h"
 #include "Checksum.h"
 #include "PatchFile.h"
 
-int WritePatch(char* patchFile, char* outMessage, int outMessageLength)
+int WritePatch(char* patchFile, char* baseFullPath, int type, char* outMessage, int outMessageLength)
 {
-	std::string notice("NXPatcher Lite v2.0 - Written by Fiel (toyobayashi Fork) - http://www.southperry.net/");
+	std::string notice("https://github.com/toyobayashi/JMSUpdater/");
 	std::string outputFile;
-	int patchCRC = 0xF2F7FBF3;
+	uint32_t patchCRC = 0xF2F7FBF3;
 	std::ofstream o;
-	std::vector<unsigned char> v;
+	std::vector<uint8_t> v;
 	std::ifstream currentEXE;
 	std::ifstream fPatch;
 	size_t lengthBase = 0;
-	std::vector<unsigned char> base;
-	unsigned int zlibCRC;
+	std::vector<uint8_t> base;
+	uint32_t zlibCRC;
 	Checksum crc;
-	int pos;
-	int lengthPatch;
-	int blockSize = 5000000;
-	std::ostringstream cmdline;
+	uint32_t pos;
+	uint32_t lengthPatch;
+	size_t blockSize = 0x500000;
+	// std::ostringstream cmdline;
 	size_t lengthCurrentEXE;
-	char fileName[MAX_PATH] = {0};
-	int lengthZlibBlock;
-	
+	uint32_t lengthZlibBlock;
 	size_t lengthSize = 4;
 
 	//Read in the base file stored in the current executable file
-	GetModuleFileNameA(NULL, fileName, MAX_PATH);
-	currentEXE.open(fileName, std::ios::binary | std::ios::in);
-	currentEXE.seekg(0, currentEXE.end);
-	lengthCurrentEXE = (int) currentEXE.tellg();
-	currentEXE.seekg(lengthCurrentEXE - lengthSize, currentEXE.beg);
-	currentEXE.read(reinterpret_cast<char*>(&lengthBase), lengthSize);
-	base.resize(lengthBase);
-	currentEXE.seekg(lengthCurrentEXE - lengthSize - lengthBase, currentEXE.beg);
-	currentEXE.read(reinterpret_cast<char*>(&base[0]), lengthBase);
-	currentEXE.close();
+	if (strcmp(baseFullPath, "") == 0) {
+		char fileName[MAX_PATH] = { 0 };
+		GetModuleFileNameA(NULL, fileName, MAX_PATH);
+		currentEXE.open(fileName, std::ios::binary | std::ios::in);
+		currentEXE.seekg(0, currentEXE.end);
+		lengthCurrentEXE = (size_t) currentEXE.tellg();
+		currentEXE.seekg(lengthCurrentEXE - lengthSize, currentEXE.beg);
+		currentEXE.read(reinterpret_cast<char*>(&lengthBase), lengthSize);
+		base.resize(lengthBase);
+		currentEXE.seekg(lengthCurrentEXE - lengthSize - lengthBase, currentEXE.beg);
+		currentEXE.read(reinterpret_cast<char*>(&base[0]), lengthBase);
+		currentEXE.close();
+	} else {
+		std::ifstream basePatcher;
+		basePatcher.open(baseFullPath, std::ios::binary | std::ios::in);
+		basePatcher.seekg(0, basePatcher.end);
+		lengthBase = basePatcher.tellg();
+		base.resize(lengthBase);
+		basePatcher.seekg(0, basePatcher.beg);
+		basePatcher.read(reinterpret_cast<char*>(&base[0]), lengthBase);
+		basePatcher.close();
+	}
 
 	//Begin the process for creating the patch file.
 	outputFile = patchFile;
 	outputFile.replace(outputFile.find(".patch"), strlen(".patch"), ".exe");
 	o.open(outputFile, std::ios::binary | std::ios::out);
 	o.write(reinterpret_cast<char*>(&base[0]), base.size());
+	base.clear();
 
 	//Begin processing the patch file
 	v.resize(blockSize);
@@ -62,14 +74,12 @@ int WritePatch(char* patchFile, char* outMessage, int outMessageLength)
 	//Calculate the CRC of the zlib block while writing to the new patch file
 	pos = 0;
 	fPatch.seekg(0, fPatch.end);
-	lengthPatch = (int) fPatch.tellg();
+	lengthPatch = (uint32_t) fPatch.tellg();
 	lengthZlibBlock = lengthPatch - 16;
 	fPatch.seekg(16, fPatch.beg);
-	while(pos < lengthZlibBlock)
-	{
-		if(pos + blockSize > lengthZlibBlock)
-		{
-			blockSize = lengthZlibBlock - pos;
+	while (pos < lengthZlibBlock) {
+		if (pos + blockSize > lengthZlibBlock) {
+      blockSize = lengthZlibBlock - pos;
 		}
 		fPatch.read(reinterpret_cast<char*>(&v[0]), blockSize);
 		o.write(reinterpret_cast<char*>(&v[0]), blockSize);
@@ -78,11 +88,21 @@ int WritePatch(char* patchFile, char* outMessage, int outMessageLength)
 	}
 
 	//Output the tail of the patch file
-	int noticeLength = notice.length();
+	uint32_t noticeLength = notice.length();
 	o.write(reinterpret_cast<char*>(&notice[0]), notice.length());
-	o.write(reinterpret_cast<char*>(&lengthPatch), sizeof(lengthPatch));
-	o.write(reinterpret_cast<char*>(&noticeLength), sizeof(noticeLength));
-	o.write(reinterpret_cast<char*>(&patchCRC), sizeof(patchCRC));
+	if (type == 2) {
+		uint64_t lengthPatchULong = lengthPatch;
+		uint64_t noticeLengthULong = noticeLength;
+		uint64_t patchCRCULong = patchCRC;
+		o.write(reinterpret_cast<char*>(&lengthPatchULong), sizeof(lengthPatchULong));
+		o.write(reinterpret_cast<char*>(&noticeLengthULong), sizeof(noticeLengthULong));
+		o.write(reinterpret_cast<char*>(&patchCRCULong), sizeof(patchCRCULong));
+	} else {
+		// type == 1
+		o.write(reinterpret_cast<char*>(&lengthPatch), sizeof(lengthPatch));
+		o.write(reinterpret_cast<char*>(&noticeLength), sizeof(noticeLength));
+		o.write(reinterpret_cast<char*>(&patchCRC), sizeof(patchCRC));
+	}
 	o.close();
 
 	if(zlibCRC != crc.GetResult())
@@ -154,7 +174,7 @@ int WritePatch(char* patchFile, char* outMessage, int outMessageLength)
 	}while(result);
 } */
 
-int PreArgHandler(char* fileName, char* outMessage, int outMessageLength)
+int PreArgHandler(char* fileName, char* baseFullPath, int type, char* outMessage, int outMessageLength)
 {
 	if(CheckHeader(fileName) == 0) {
 		std::string msg = ErrorHandler(NXError::BAD_HEADER);
@@ -164,7 +184,7 @@ int PreArgHandler(char* fileName, char* outMessage, int outMessageLength)
 		}
 		return 0;
 	} else {
-		return WritePatch(fileName, outMessage, outMessageLength);
+		return WritePatch(fileName, baseFullPath, type, outMessage, outMessageLength);
 	}
 }
 
