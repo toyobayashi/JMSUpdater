@@ -67,3 +67,18 @@ struct pre_patcher_new {
   uint8_t    magic[8];
 };
 ```
+
+Version.info 文件
+
+```
+http://webdown2.nexon.co.jp/maple/patch/patchdir/00394/Version.info
+```
+
+```
+0x522aa970 (Patcher.exe CRC)
+0x799b4373 (MapleStory.exe CRC)
+00393 (支持的版本)
+00392
+00391
+00394
+```
