@@ -49,7 +49,7 @@ int WritePatch(char* patchFile, char* baseFullPath, int type, char* outMessage, 
 		std::ifstream basePatcher;
 		basePatcher.open(baseFullPath, std::ios::binary | std::ios::in);
 		basePatcher.seekg(0, basePatcher.end);
-		lengthBase = basePatcher.tellg();
+		lengthBase = (size_t) basePatcher.tellg();
 		base.resize(lengthBase);
 		basePatcher.seekg(0, basePatcher.beg);
 		basePatcher.read(reinterpret_cast<char*>(&base[0]), lengthBase);
