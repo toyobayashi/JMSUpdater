@@ -58,4 +58,5 @@ public:
 	CString static_speed;
 	CWinThread* downloadThread;
 	CString status_value;
+	afx_msg void OnBnClickedCheckButton();
 };

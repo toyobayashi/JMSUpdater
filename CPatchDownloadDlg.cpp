@@ -7,6 +7,7 @@
 #include "afxdialogex.h"
 
 #include <string>
+#include "wz/lib.h"
 
 // CPatchDownloadDlg 对话框
 
@@ -79,6 +80,9 @@ static void MakePatch(CPatchDownloadDlg* self, const CString& name) {
   wchar_t msgW[512] = { 0 };
   if (PreArgHandler(pathA, baseFullPath, option->type, msg, sizeof(msg))) {
     CString * compl = new CString(_T("已完成"));
+    MultiByteToWideChar(CP_ACP, 0, msg, -1, msgW, 512);
+    compl->Append(_T("："));
+    compl->Append(CString(msgW));
     ::PostMessageW(self->m_hWnd, WM_PATCH_LOG, 0, (LPARAM)compl);
   } else {
     CString * compl = new CString(_T("制作失败："));
@@ -161,6 +165,7 @@ BEGIN_MESSAGE_MAP(CPatchDownloadDlg, CDialogEx)
   ON_BN_CLICKED(IDC_START_BUTTON, &CPatchDownloadDlg::OnBnClickedStartButton)
   ON_MESSAGE(WM_UPDATE_PROGRESS, &CPatchDownloadDlg::OnProgress)
   ON_MESSAGE(WM_PATCH_LOG, &CPatchDownloadDlg::OnLog)
+  ON_BN_CLICKED(IDC_CHECK_BUTTON, &CPatchDownloadDlg::OnBnClickedCheckButton)
 END_MESSAGE_MAP()
 
 
@@ -305,4 +310,46 @@ void CPatchDownloadDlg::print(const CString& msg) {
   log_value += msg + _T("\r\n");
   log.SetWindowTextW(log_value);
   log.LineScroll(log.GetLineCount());
+}
+
+
+void CPatchDownloadDlg::OnBnClickedCheckButton() {
+  OPENFILENAME ofn;
+  std::wstring szFile;
+  std::wstring currentDirectory;
+  std::wstring szFileTitle;
+  int result = 1;
+
+  szFileTitle.resize(MAX_PATH);
+  szFile.resize(MAX_PATH);
+  currentDirectory.resize(MAX_PATH);
+
+  GetCurrentDirectory(currentDirectory.length(), &currentDirectory[0]);
+
+  ZeroMemory(&ofn, sizeof(ofn));
+  ofn.lStructSize = sizeof(ofn);
+  ofn.hwndOwner = NULL;
+  ofn.lpstrFile = &szFile[0];
+  ofn.lpstrFile[0] = '\0';
+  ofn.nMaxFile = szFile.length();
+  ofn.lpstrFilter = _T("WZ (*.wz)\0*.wz");
+  ofn.nFilterIndex = 1;
+  ofn.lpstrFileTitle = &szFileTitle[0];
+  ofn.nMaxFileTitle = szFileTitle.length();
+  ofn.lpstrInitialDir = currentDirectory.c_str();
+  ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
+
+  result = GetOpenFileName(&ofn);
+
+  if (result) {
+    char path[MAX_PATH] = { 0 };
+    WideCharToMultiByte(CP_ACP, 0, ofn.lpstrFile, -1, path, MAX_PATH, NULL, NULL);
+    
+    char ver[128] = { 0 };
+    WCHAR verW[128] = { 0 };
+    int r = get_wz_version(path, ver, 128);
+
+    MultiByteToWideChar(CP_ACP, 0, ver, -1, verW, 128);
+    MessageBox(verW, r == 0 ? _T("版本检测失败") : _T("客户端版本"), r == 0 ? MB_ICONERROR : MB_ICONINFORMATION);
+  }
 }

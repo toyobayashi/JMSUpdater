@@ -123,7 +123,8 @@ int WritePatch(char* patchFile, char* baseFullPath, int type, char* outMessage, 
 	} */
 
 	if (outMessage != NULL) {
-		memset(outMessage, 0, outMessageLength);
+		strncpy(outMessage, outputFile.c_str(), outMessageLength - 1);
+		*(outMessage + outMessageLength - 1) = '\0';
 	}
 	return 1;
 }
