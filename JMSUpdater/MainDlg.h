@@ -32,4 +32,5 @@ public:
 	CPatchDownloadDlg patchtab;
 	CGameDownloadDlg gametab;
 	afx_msg void OnTcnSelchangeTab1(NMHDR* pNMHDR, LRESULT* pResult);
+	afx_msg void OnSysCommand(UINT nID, LPARAM lParam);
 };
