@@ -5,6 +5,7 @@
 #include "JMSUpdater.h"
 #include "CPatchDownloadDlg.h"
 #include "afxdialogex.h"
+#include "afxinet.h"
 
 #include <string>
 #include "../wz/lib.h"
@@ -168,9 +169,148 @@ BEGIN_MESSAGE_MAP(CPatchDownloadDlg, CDialogEx)
   ON_BN_CLICKED(IDC_CHECK_BUTTON, &CPatchDownloadDlg::OnBnClickedCheckButton)
 END_MESSAGE_MAP()
 
+static BOOL checkVersionAvailable(const CString& fromValue, const CString& toValue, CString& msg) {
+  CString fromValueStr, toValueStr;
+  fromValueStr.Format(_T("%05d"), _ttoi(fromValue));
+  toValueStr.Format(_T("%05d"), _ttoi(toValue));
+  if (fromValueStr == toValueStr) {
+    msg.Format(_T("不支持从 %s 升级到 %s"), fromValue.GetString(), toValue.GetString());
+    return FALSE;
+  }
+  INTERNET_PORT nPort;
+  CString strServer, strObject;
+  DWORD dwServiceType, statusCode;
+  CString strUrl = _T("http://webdown2.nexon.co.jp/maple/patch/patchdir/");
+  strUrl += toValueStr;
+  strUrl += _T("/Version.info");
 
-void download(void* s) {
+  if (!AfxParseURL(strUrl, dwServiceType, strServer, strObject, nPort)) {
+    msg = _T("解析失败");
+    return FALSE;
+  }
+  CInternetSession session;
+  session.SetOption(INTERNET_OPTION_CONNECT_TIMEOUT, 1000 * 20);
+  CHttpConnection* connection = NULL;
+  try {
+    connection = session.GetHttpConnection(strServer, nPort);
+  } catch (CInternetException* e) {
+    connection = NULL;
+    WCHAR msgtemp[1024];
+    e->GetErrorMessage(msgtemp, 1024);
+    e->Delete();
+    msg = msgtemp;
+    session.Close();
+    return FALSE;
+  }
+  if (connection == NULL) {
+    session.Close();
+    msg = _T("网络连接失败");
+    return FALSE;
+  }
+
+  CHttpFile* file = connection->OpenRequest(CHttpConnection::HTTP_VERB_GET, strObject);
+  if (file == NULL) {
+    session.Close();
+    connection->Close();
+    delete connection;
+    msg = _T("请求失败");
+    return FALSE;
+  }
+
+  file->SendRequest();
+
+  file->QueryInfoStatusCode(statusCode);
+
+  if (statusCode == HTTP_STATUS_NOT_FOUND) {
+    session.Close();
+    connection->Close();
+    file->Close();
+    delete connection;
+    delete file;
+    msg.Format(_T("版本不存在：%s"), toValue.GetString());
+    return FALSE;
+  }
+
+  if (statusCode != HTTP_STATUS_OK) {
+    session.Close();
+    connection->Close();
+    file->Close();
+    delete connection;
+    delete file;
+    CString txt;
+    txt.Format(_T("请求失败：%u"), statusCode);
+    msg = txt;
+    return FALSE;
+  }
+
+  UINT nReaded = 0;
+  std::string responseText;
+  char buf[8096] = { 0 };
+  try {
+    while ((nReaded = file->Read((void*)buf, 8095)) > 0) {
+      buf[nReaded] = '\0';
+      responseText += buf;
+    }
+  } catch (CInternetException* e) {
+    WCHAR msgtemp[1024];
+    e->GetErrorMessage(msgtemp, 1024);
+    e->Delete();
+    msg = msgtemp;
+    session.Close();
+    connection->Close();
+    file->Close();
+    delete connection;
+    delete file;
+    return FALSE;
+  }
+ 
+  int len = MultiByteToWideChar(CP_UTF8, 0, responseText.c_str(), -1, NULL, 0);
+  WCHAR* responseW = new WCHAR[len];
+  MultiByteToWideChar(CP_UTF8, 0, responseText.c_str(), -1, responseW, len);
+  CString res(responseW);
+  delete[] responseW;
+
+  session.Close();
+  connection->Close();
+  file->Close();
+  delete connection;
+  delete file;
+
+  CString sub = res;
+  int l = 0;
+  int rnindex;
+  CString left;
+  CString right;
+  int versioncode = _ttoi(fromValue);
+  CString target;
+  target.Format(_T("%05d"), versioncode);
+  while ((rnindex = sub.Find(_T("\r\n"))) != -1) {
+    left = res.Mid(l, rnindex);
+    right = res.Right(res.GetLength() - rnindex - l - 2);
+    if (left.Find(_T("0x")) != 0 && left == target) {
+      return TRUE;
+    }
+    sub = right;
+    l += rnindex + 2;
+  }
+  
+  msg.Format(_T("不支持从 %s 升级到 %s"), fromValue.GetString(), toValue.GetString());
+  return FALSE;
+}
+
+static void download(void* s) {
   CPatchDownloadDlg* self = (CPatchDownloadDlg*)s;
+  CString errmsg;
+  BOOL r = checkVersionAvailable(self->input_from_value, self->input_to_value, errmsg);
+  if (!r) {
+    CString* printmsg = new CString(errmsg);
+    ::PostMessageW(self->m_hWnd, WM_PATCH_LOG, 0, (LPARAM)printmsg);
+    ::PostMessageW(self->m_hWnd, WM_UPDATE_PROGRESS, 1, 0);
+    return;
+  }
+  CString fromValueStr, toValueStr;
+  fromValueStr.Format(_T("%05d"), _ttoi(self->input_from_value));
+  toValueStr.Format(_T("%05d"), _ttoi(self->input_to_value));
   if (self->taskHandle != NULL) {
     self->dl.TaskDelete(self->taskHandle);
     // self->dl.TaskStart(self->taskHandle);
@@ -183,8 +323,8 @@ void download(void* s) {
   PathCombineW(targetdir, szModulePath, L"data");
   CreateDirectoryW(targetdir, NULL);
 
-  CString name = CString(_T("00")) + self->input_from_value + _T("to00") + self->input_to_value + _T(".patch");
-  CString url = CString(L"https://webdown2.nexon.co.jp/maple/patch/patchdir/00")+ self->input_to_value + _T("/") + name;
+  CString name = fromValueStr + _T("to") + toValueStr + _T(".patch");
+  CString url = CString(L"https://webdown2.nexon.co.jp/maple/patch/patchdir/")+ toValueStr + _T("/") + name;
   
   if (PathFileExistsW(CString(targetdir) + _T("\\") + name)) {
     MakePatch(self, name);
@@ -351,5 +491,9 @@ void CPatchDownloadDlg::OnBnClickedCheckButton() {
 
     MultiByteToWideChar(CP_ACP, 0, ver, -1, verW, 128);
     MessageBox(verW, r == 0 ? _T("版本检测失败") : _T("客户端版本"), r == 0 ? MB_ICONERROR : MB_ICONINFORMATION);
+    if (r) {
+      this->input_from_value = verW;
+      UpdateData(0);
+    }
   }
 }
