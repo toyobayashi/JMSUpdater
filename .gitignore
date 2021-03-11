@@ -2,11 +2,7 @@
 *.vcxproj.user
 *.aps
 
-/Debug/*
-!/Debug/xldl.dll
-!/Debug/download
-!/Debug/patchers
-!/Debug/NXPatcherLite.exe
+/Debug
 /Release
 /dist
 
@@ -14,3 +10,5 @@
 /NXPatcherLite++/Debug
 /wz/Release
 /wz/Debug
+/JMSUpdater/Debug
+/JMSUpdater/Release

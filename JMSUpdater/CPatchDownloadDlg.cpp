@@ -7,7 +7,7 @@
 #include "afxdialogex.h"
 
 #include <string>
-#include "wz/lib.h"
+#include "../wz/lib.h"
 
 // CPatchDownloadDlg 对话框
 
