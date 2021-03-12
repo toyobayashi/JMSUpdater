@@ -96,7 +96,7 @@ BEGIN
     LTEXT           "补丁版本从",IDC_STATIC,7,9,35,8
     EDITTEXT        IDC_FROM_EDIT,43,7,24,12,ES_AUTOHSCROLL | ES_NUMBER
     LTEXT           "到",IDC_STATIC,69,9,8,8
-    EDITTEXT        IDC_TO_EDIT,79,7,24,12,ES_AUTOHSCROLL
+    EDITTEXT        IDC_TO_EDIT,79,7,24,12,ES_AUTOHSCROLL | ES_NUMBER
     PUSHBUTTON      "开始",IDC_START_BUTTON,264,6,38,14
     CONTROL         "",IDC_PROGRESS1,"msctls_progress32",WS_BORDER,7,37,295,11
     EDITTEXT        IDC_LOG_EDIT,7,56,295,113,ES_MULTILINE | ES_AUTOHSCROLL | ES_READONLY | WS_VSCROLL | WS_HSCROLL
@@ -123,7 +123,7 @@ STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "关于"
 FONT 9, "Microsoft YaHei UI", 400, 0, 0x0
 BEGIN
-    LTEXT           "v1.3.1",IDC_STATIC,13,10,148,8
+    LTEXT           "v1.3.2",IDC_STATIC,13,10,148,8
     CONTROL         "https://github.com/toyobayashi/JMSUpdater/",IDC_MFCLINK1,
                     "MfcLink",WS_TABSTOP,13,26,148,10
 END
@@ -135,8 +135,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 1,3,1,0
- PRODUCTVERSION 1,3,1,0
+ FILEVERSION 1,3,2,0
+ PRODUCTVERSION 1,3,2,0
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -153,11 +153,11 @@ BEGIN
         BEGIN
             VALUE "CompanyName", "Toyobayashi"
             VALUE "FileDescription", "日服冒险岛更新工具"
-            VALUE "FileVersion", "1.3.1.0"
+            VALUE "FileVersion", "1.3.2.0"
             VALUE "InternalName", "JMSUpdater.exe"
             VALUE "OriginalFilename", "JMSUpdater.exe"
             VALUE "ProductName", "JMSUpdater"
-            VALUE "ProductVersion", "1.3.1.0"
+            VALUE "ProductVersion", "1.3.2.0"
         END
     END
     BLOCK "VarFileInfo"

@@ -304,7 +304,7 @@ static void download(void* s) {
   BOOL r = checkVersionAvailable(self->input_from_value, self->input_to_value, errmsg);
   if (!r) {
     CString* printmsg = new CString(errmsg);
-    ::PostMessageW(self->m_hWnd, WM_PATCH_LOG, 0, (LPARAM)printmsg);
+    ::PostMessageW(self->m_hWnd, WM_PATCH_LOG, 1, (LPARAM)printmsg);
     ::PostMessageW(self->m_hWnd, WM_UPDATE_PROGRESS, 1, 0);
     return;
   }
@@ -390,6 +390,14 @@ static void download(void* s) {
 
 void CPatchDownloadDlg::OnBnClickedStartButton() {
   UpdateData(1);
+  if (input_from_value == "") {
+    MessageBox(_T("请输入开始版本"), _T("提示"), MB_ICONWARNING);
+    return;
+  }
+  if (input_to_value == "") {
+    MessageBox(_T("请输入目标版本"), _T("提示"), MB_ICONWARNING);
+    return;
+  }
   button.EnableWindow(0);
   input_from.EnableWindow(0);
   input_to.EnableWindow(0);
@@ -442,6 +450,9 @@ LRESULT CPatchDownloadDlg::OnProgress(WPARAM wParam, LPARAM lParam) {
 LRESULT CPatchDownloadDlg::OnLog(WPARAM wParam, LPARAM lParam) {
   CString* v = (CString*)lParam;
   this->print(*v);
+  if (wParam == 1) {
+    MessageBox(*v);
+  }
   delete v;
   return 0;
 }
