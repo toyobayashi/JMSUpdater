@@ -167,6 +167,7 @@ BEGIN_MESSAGE_MAP(CPatchDownloadDlg, CDialogEx)
   ON_MESSAGE(WM_UPDATE_PROGRESS, &CPatchDownloadDlg::OnProgress)
   ON_MESSAGE(WM_PATCH_LOG, &CPatchDownloadDlg::OnLog)
   ON_BN_CLICKED(IDC_CHECK_BUTTON, &CPatchDownloadDlg::OnBnClickedCheckButton)
+  ON_BN_CLICKED(IDC_CHECK_LATEST, &CPatchDownloadDlg::OnBnClickedCheckLatest)
 END_MESSAGE_MAP()
 
 static BOOL checkVersionAvailable(const CString& fromValue, const CString& toValue, CString& msg) {
@@ -507,4 +508,9 @@ void CPatchDownloadDlg::OnBnClickedCheckButton() {
       UpdateData(0);
     }
   }
+}
+
+
+void CPatchDownloadDlg::OnBnClickedCheckLatest() {
+  ShellExecute(NULL, _T("open"), L"https://maplestory.nexon.co.jp/notice/list/update/", NULL, NULL, SW_SHOWNORMAL);
 }

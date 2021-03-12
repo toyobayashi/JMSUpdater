@@ -59,4 +59,5 @@ public:
 	CWinThread* downloadThread;
 	CString status_value;
 	afx_msg void OnBnClickedCheckButton();
+	afx_msg void OnBnClickedCheckLatest();
 };
