@@ -124,7 +124,7 @@ STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "¹ØÓÚ"
 FONT 9, "Microsoft YaHei UI", 400, 0, 0x0
 BEGIN
-    LTEXT           "v1.3.2",IDC_STATIC,13,10,148,8
+    LTEXT           "v1.3.3",IDC_STATIC,13,10,148,8
     CONTROL         "https://github.com/toyobayashi/JMSUpdater/",IDC_MFCLINK1,
                     "MfcLink",WS_TABSTOP,13,26,148,10
 END
