@@ -1,3 +1,11 @@
+# Deprecated
+
+```bat
+C:\ProgramData\Nexon\NGM\NGM64.exe -mode:launch -game:'16785939@bb01'
+```
+
+------------------------------------
+
 用远古 VC 写的日服冒险岛更新工具
 
 # 完整客户端下载
