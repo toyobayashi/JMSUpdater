@@ -1,6 +1,12 @@
 # Deprecated
 
+https://github.com/Kagamia/WzComparerR2/issues/279
+
 ```bat
+@REM install or associate
+C:\ProgramData\Nexon\NGM\NGM64.exe -mode:install -game:'16785939@bb01'
+
+@REM launch or update
 C:\ProgramData\Nexon\NGM\NGM64.exe -mode:launch -game:'16785939@bb01'
 ```
 
